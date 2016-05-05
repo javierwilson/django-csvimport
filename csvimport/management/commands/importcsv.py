@@ -11,6 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import LabelCommand, BaseCommand
 from optparse import make_option
 from django.db import models
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 
 from django.conf import settings
@@ -30,8 +31,8 @@ SMALLINT_DBS = ['sqlite3', ]
 DATE = ['DateField', 'TimeField', 'DateTimeField']
 BOOLEAN = ['BooleanField', 'NullBooleanField']
 BOOLEAN_TRUE = [1, '1', 'Y', 'Yes', 'yes', 'True', 'true', 'T', 't']
-DATE_INPUT_FORMATS = settings.DATE_INPUT_FORMATS or ('%d/%m/%Y','%Y/%m/%d')
-CSV_DATE_INPUT_FORMATS = DATE_INPUT_FORMATS + ('%d-%m-%Y','%Y-%m-%d')
+DATE_INPUT_FORMATS = settings.DATE_INPUT_FORMATS or ['%d/%m/%Y','%Y/%m/%d']
+CSV_DATE_INPUT_FORMATS = DATE_INPUT_FORMATS + ['%d-%m-%Y','%Y-%m-%d']
 cleancol = re.compile('[^0-9a-zA-Z]+')  # cleancol.sub('_', s)
 
 from django import dispatch
@@ -158,7 +159,7 @@ class Command(LabelCommand, CSVParser):
                 return failed
         self.charset = charset
         self.app_label = app_label
-        self.model = models.get_model(app_label, model)
+        self.model = apps.get_model(app_label, model)
         if not self.model:
             return 'No model found for %s.%s' % (app_label, model)
         try:
@@ -402,7 +403,7 @@ class Command(LabelCommand, CSVParser):
                 new_app_label = ContentType.objects.get(model=fk_key).app_label
             except:
                 new_app_label = self.app_label
-            fk_model = models.get_model(new_app_label, fk_key)
+            fk_model = apps.get_model(new_app_label, fk_key)
             matches = fk_model.objects.filter(**{fk_field+'__exact':
                                                  rowcol})
 

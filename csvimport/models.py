@@ -1,6 +1,7 @@
 import csvimport.monkeypatch_tzinfo
 
 from django.db import models
+from django.apps import apps
 from csvimport.app import settings
 from copy import deepcopy
 from django.core.files.storage import FileSystemStorage
@@ -23,7 +24,7 @@ def get_models():
         except:
             # django1.7 or later ...
             try:
-                allmodels = models.get_models()
+                allmodels = apps.get_models()
             except:
                 allmodels = []
         if allmodels:
@@ -43,7 +44,8 @@ class CSVImport(models.Model):
     model_name = models.CharField(max_length=255, blank=False,
                                   default='iisharing.Item',
                                   help_text='Please specify the app_label.model_name',
-                                  choices=get_models())
+                                  #choices=get_models(),
+				)
     field_list = models.CharField(max_length=255, blank=True,
                         help_text='''Enter list of fields in order only if
                                      you dont have a header row with matching field names, eg.
@@ -57,6 +59,11 @@ class CSVImport(models.Model):
     import_date = models.DateField(auto_now=True)
     import_user = models.CharField(max_length=255, default='anonymous',
                                    help_text='User id as text', blank=True)
+
+
+    def __init__(self,  *args, **kwargs):
+        super(CSVImport, self).__init__(*args, **kwargs)
+        self._meta.get_field('model_name').choices = get_models()
 
     def error_log_html(self):
         return re.sub('\n', '<br/>', self.error_log)
